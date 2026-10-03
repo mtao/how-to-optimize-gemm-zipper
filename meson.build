@@ -37,6 +37,7 @@ executable(
 solutions = [
   '_',
   '0',
+  '1',
 ]
 foreach index : solutions
   mult = 'mmult@0@'.format(index)
