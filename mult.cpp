@@ -55,7 +55,8 @@ void InnerKernel(zipper::concepts::Matrix auto const &A,
                  zipper::concepts::Matrix auto const &B,
                  zipper::concepts::Matrix auto &C,
                  zipper::concepts::Matrix auto &ApackedBuffer,
-                 zipper::concepts::Matrix auto &BpackedBuffer) {
+                 zipper::concepts::Matrix auto &BpackedBuffer,
+                 bool update_bpack) {
   const index_type n = C.cols();
   const index_type m = A.rows();
   const index_type k = A.cols();
@@ -63,9 +64,11 @@ void InnerKernel(zipper::concepts::Matrix auto const &A,
   for (auto j : std::views::iota(index_type{0}, n) | std::views::stride(4)) {
     auto Bpanel =
         BpackedBuffer(zipper::slice(j / 4 * k, k), zipper::full_extent_t{});
-    Bpanel.noalias() =
-        B(zipper::full_extent_t{},
-          zipper::slice(j, std::integral_constant<index_type, 4>{}));
+    if (update_bpack) {
+      Bpanel.noalias() =
+          B(zipper::full_extent_t{},
+            zipper::slice(j, std::integral_constant<index_type, 4>{}));
+    }
     for (auto i : std::views::iota(index_type{0}, m) | std::views::stride(4)) {
       auto Apanel =
           ApackedBuffer(zipper::full_extent_t{}, zipper::slice(i / 4 * k, k));
@@ -121,7 +124,8 @@ void MULT_NAME(AMat const &A, BMat const &B, CMat &C) {
       auto a = A(islice, kslice);
       auto b = B(kslice, zipper::full_extent_t{});
       auto c = C(islice, zipper::full_extent_t{});
-      InnerKernel(a, b, c, packedABuffer, packedBBuffer);
+      bool update_bpack = i == 0;
+      InnerKernel(a, b, c, packedABuffer, packedBBuffer, update_bpack);
     }
   }
 }
