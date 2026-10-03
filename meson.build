@@ -38,6 +38,7 @@ solutions = [
   '_',
   '0',
   '1',
+  '2',
 ]
 foreach index : solutions
   mult = 'mmult@0@'.format(index)
