@@ -1,30 +1,37 @@
 #include "definitions.hpp"
 #include <ranges>
+#include <zipper/expression/nullary/Constant.hpp>
 
 namespace {
-void mymul_4x4(zipper::concepts::Matrix auto const &A,
-               zipper::concepts::Matrix auto const &B,
-               zipper::concepts::Matrix auto &C) {
+auto mymul_4x4(zipper::concepts::Matrix auto const &A,
+               zipper::concepts::Matrix auto const &B) {
 
+  // NOTE: by using a matrix here apparently the compiler is auto-vectorizing
+  // better than the original tutorial which used register variables that
+  // couldn't be realized as vectors easily
+  zipper::Matrix<scalar_type, 4, 4, false> C =
+      zipper::expression::nullary::Constant<scalar_type>(0);
   const index_type k = B.rows();
   for (auto p : std::views::iota(index_type{0}, k)) {
-    C(0, 0) += A(0, p) * B(p, 0);
-    C(0, 1) += A(0, p) * B(p, 1);
-    C(0, 2) += A(0, p) * B(p, 2);
-    C(0, 3) += A(0, p) * B(p, 3);
-    C(1, 0) += A(1, p) * B(p, 0);
-    C(1, 1) += A(1, p) * B(p, 1);
-    C(1, 2) += A(1, p) * B(p, 2);
-    C(1, 3) += A(1, p) * B(p, 3);
-    C(2, 0) += A(2, p) * B(p, 0);
-    C(2, 1) += A(2, p) * B(p, 1);
-    C(2, 2) += A(2, p) * B(p, 2);
-    C(2, 3) += A(2, p) * B(p, 3);
-    C(3, 0) += A(3, p) * B(p, 0);
-    C(3, 1) += A(3, p) * B(p, 1);
-    C(3, 2) += A(3, p) * B(p, 2);
-    C(3, 3) += A(3, p) * B(p, 3);
+    zipper::Vector a = A.col(p);
+    C(0, 0) += a(0) * B(p, 0);
+    C(0, 1) += a(0) * B(p, 1);
+    C(0, 2) += a(0) * B(p, 2);
+    C(0, 3) += a(0) * B(p, 3);
+    C(1, 0) += a(1) * B(p, 0);
+    C(1, 1) += a(1) * B(p, 1);
+    C(1, 2) += a(1) * B(p, 2);
+    C(1, 3) += a(1) * B(p, 3);
+    C(2, 0) += a(2) * B(p, 0);
+    C(2, 1) += a(2) * B(p, 1);
+    C(2, 2) += a(2) * B(p, 2);
+    C(2, 3) += a(2) * B(p, 3);
+    C(3, 0) += a(3) * B(p, 0);
+    C(3, 1) += a(3) * B(p, 1);
+    C(3, 2) += a(3) * B(p, 2);
+    C(3, 3) += a(3) * B(p, 3);
   }
+  return C;
 }
 
 } // namespace
@@ -40,7 +47,7 @@ void MULT_NAME(AMat const &A, BMat const &B, CMat &C) {
                  zipper::full_extent_t{});
       auto b = B(zipper::full_extent_t{},
                  zipper::slice(j, std::integral_constant<index_type, 4>{}));
-      mymul_4x4(a, b, c);
+      c += mymul_4x4(a, b);
     }
   }
 }
