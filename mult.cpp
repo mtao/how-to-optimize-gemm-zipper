@@ -55,9 +55,9 @@ auto mymul_4x4(zipper::concepts::Matrix auto const &A,
   return C;
 }
 
-} // namespace
-
-void MULT_NAME(AMat const &A, BMat const &B, CMat &C) {
+void InnerKernel(zipper::concepts::Matrix auto const &A,
+                 zipper::concepts::Matrix auto const &B,
+                 zipper::concepts::Matrix auto &C) {
   const index_type m = C.rows();
   const index_type n = C.cols();
   for (auto j : std::views::iota(index_type{0}, n) | std::views::stride(4)) {
@@ -69,6 +69,38 @@ void MULT_NAME(AMat const &A, BMat const &B, CMat &C) {
       auto b = B(zipper::full_extent_t{},
                  zipper::slice(j, std::integral_constant<index_type, 4>{}));
       c += mymul_4x4(a, b);
+    }
+  }
+}
+
+} // namespace
+
+void MULT_NAME(AMat const &A, BMat const &B, CMat &C) {
+  constexpr static index_type mc = 256;
+  constexpr static index_type kc = 128;
+
+  const index_type m = C.rows();
+  const index_type k = A.cols();
+
+  constexpr auto blocks = [](index_type n, index_type b) {
+    constexpr auto block = [](auto r) {
+      return std::make_pair(r.front(),
+                            static_cast<index_type>(std::ranges::size(r)));
+    };
+    return std::views::iota(index_type{0}, n) | std::views::chunk(b) |
+           std::views::transform(block);
+  };
+
+  for (auto [p, pc] : blocks(k, kc)) {
+    for (auto [i, ic] : blocks(m, mc)) {
+
+      auto islice = zipper::slice(i, ic);
+      auto kslice = zipper::slice(p, pc);
+
+      auto a = A(islice, kslice);
+      auto b = B(kslice, zipper::full_extent_t{});
+      auto c = C(islice, zipper::full_extent_t{});
+      InnerKernel(a, b, c);
     }
   }
 }
