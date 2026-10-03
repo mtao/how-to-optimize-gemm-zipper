@@ -2,38 +2,59 @@
 #include <ranges>
 
 namespace {
-void mydot(zipper::concepts::Vector auto const &x,
-           zipper::concepts::Vector auto const &y, scalar_type &c) {
-
-  const index_type k = x.size();
-  for (auto p : std::views::iota(index_type{0}, k)) {
-    c += x(p) * y(p);
-  }
-}
-
 void mymul_4x4(zipper::concepts::Matrix auto const &A,
                zipper::concepts::Matrix auto const &B,
                zipper::concepts::Matrix auto &C) {
 
-  mydot(A.row(0), B.col(0), C(0, 0));
-  mydot(A.row(0), B.col(1), C(0, 1));
-  mydot(A.row(0), B.col(2), C(0, 2));
-  mydot(A.row(0), B.col(3), C(0, 3));
-
-  mydot(A.row(1), B.col(0), C(1, 0));
-  mydot(A.row(1), B.col(1), C(1, 1));
-  mydot(A.row(1), B.col(2), C(1, 2));
-  mydot(A.row(1), B.col(3), C(1, 3));
-
-  mydot(A.row(2), B.col(0), C(2, 0));
-  mydot(A.row(2), B.col(1), C(2, 1));
-  mydot(A.row(2), B.col(2), C(2, 2));
-  mydot(A.row(2), B.col(3), C(2, 3));
-
-  mydot(A.row(3), B.col(0), C(3, 0));
-  mydot(A.row(3), B.col(1), C(3, 1));
-  mydot(A.row(3), B.col(2), C(3, 2));
-  mydot(A.row(3), B.col(3), C(3, 3));
+  const index_type k = B.rows();
+  for (auto p : std::views::iota(index_type{0}, k)) {
+    C(0, 0) += A(0, p) * B(p, 0);
+  }
+  for (auto p : std::views::iota(index_type{0}, k)) {
+    C(0, 1) += A(0, p) * B(p, 1);
+  }
+  for (auto p : std::views::iota(index_type{0}, k)) {
+    C(0, 2) += A(0, p) * B(p, 2);
+  }
+  for (auto p : std::views::iota(index_type{0}, k)) {
+    C(0, 3) += A(0, p) * B(p, 3);
+  }
+  for (auto p : std::views::iota(index_type{0}, k)) {
+    C(1, 0) += A(1, p) * B(p, 0);
+  }
+  for (auto p : std::views::iota(index_type{0}, k)) {
+    C(1, 1) += A(1, p) * B(p, 1);
+  }
+  for (auto p : std::views::iota(index_type{0}, k)) {
+    C(1, 2) += A(1, p) * B(p, 2);
+  }
+  for (auto p : std::views::iota(index_type{0}, k)) {
+    C(1, 3) += A(1, p) * B(p, 3);
+  }
+  for (auto p : std::views::iota(index_type{0}, k)) {
+    C(2, 0) += A(2, p) * B(p, 0);
+  }
+  for (auto p : std::views::iota(index_type{0}, k)) {
+    C(2, 1) += A(2, p) * B(p, 1);
+  }
+  for (auto p : std::views::iota(index_type{0}, k)) {
+    C(2, 2) += A(2, p) * B(p, 2);
+  }
+  for (auto p : std::views::iota(index_type{0}, k)) {
+    C(2, 3) += A(2, p) * B(p, 3);
+  }
+  for (auto p : std::views::iota(index_type{0}, k)) {
+    C(3, 0) += A(3, p) * B(p, 0);
+  }
+  for (auto p : std::views::iota(index_type{0}, k)) {
+    C(3, 1) += A(3, p) * B(p, 1);
+  }
+  for (auto p : std::views::iota(index_type{0}, k)) {
+    C(3, 2) += A(3, p) * B(p, 2);
+  }
+  for (auto p : std::views::iota(index_type{0}, k)) {
+    C(3, 3) += A(3, p) * B(p, 3);
+  }
 }
 
 } // namespace
