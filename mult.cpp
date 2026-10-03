@@ -11,25 +11,37 @@ auto mymul_4x4(zipper::concepts::Matrix auto const &A,
   // couldn't be realized as vectors easily
   zipper::Matrix<scalar_type, 4, 4, false> C =
       zipper::expression::nullary::Constant<scalar_type>(0);
+
+  // in case we ever experiment, this version is really dependent on colmajor to
+  // work right
+  static_assert(std::is_same_v<BMat::layout_type, zipper::storage::col_major>);
+
   const index_type k = B.rows();
+  std::array<scalar_type const *, 4> bptrs;
   for (auto p : std::views::iota(index_type{0}, k)) {
     zipper::Vector a = A.col(p);
-    C(0, 0) += a(0) * B(p, 0);
-    C(0, 1) += a(0) * B(p, 1);
-    C(0, 2) += a(0) * B(p, 2);
-    C(0, 3) += a(0) * B(p, 3);
-    C(1, 0) += a(1) * B(p, 0);
-    C(1, 1) += a(1) * B(p, 1);
-    C(1, 2) += a(1) * B(p, 2);
-    C(1, 3) += a(1) * B(p, 3);
-    C(2, 0) += a(2) * B(p, 0);
-    C(2, 1) += a(2) * B(p, 1);
-    C(2, 2) += a(2) * B(p, 2);
-    C(2, 3) += a(2) * B(p, 3);
-    C(3, 0) += a(3) * B(p, 0);
-    C(3, 1) += a(3) * B(p, 1);
-    C(3, 2) += a(3) * B(p, 2);
-    C(3, 3) += a(3) * B(p, 3);
+    bptrs = {{
+        &B(p, 0),
+        &B(p, 1),
+        &B(p, 2),
+        &B(p, 3),
+    }};
+    C(0, 0) += a(0) * *bptrs[0];
+    C(0, 1) += a(0) * *bptrs[1];
+    C(0, 2) += a(0) * *bptrs[2];
+    C(0, 3) += a(0) * *bptrs[3];
+    C(1, 0) += a(1) * *bptrs[0];
+    C(1, 1) += a(1) * *bptrs[1];
+    C(1, 2) += a(1) * *bptrs[2];
+    C(1, 3) += a(1) * *bptrs[3];
+    C(2, 0) += a(2) * *bptrs[0];
+    C(2, 1) += a(2) * *bptrs[1];
+    C(2, 2) += a(2) * *bptrs[2];
+    C(2, 3) += a(2) * *bptrs[3];
+    C(3, 0) += a(3) * *bptrs[0];
+    C(3, 1) += a(3) * *bptrs[1];
+    C(3, 2) += a(3) * *bptrs[2];
+    C(3, 3) += a(3) * *bptrs[3];
   }
   return C;
 }
