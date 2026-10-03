@@ -11,6 +11,16 @@ void mydot(zipper::concepts::Vector auto const &x,
   }
 }
 
+void mydot_1x4(zipper::concepts::Vector auto const &x,
+               zipper::concepts::Matrix auto const &B,
+               zipper::concepts::Vector auto &c) {
+
+  mydot(x, B.col(0), c(0));
+  mydot(x, B.col(1), c(1));
+  mydot(x, B.col(2), c(2));
+  mydot(x, B.col(3), c(3));
+}
+
 } // namespace
 
 void MULT_NAME(AMat const &A, BMat const &B, CMat &C) {
@@ -18,10 +28,10 @@ void MULT_NAME(AMat const &A, BMat const &B, CMat &C) {
   const index_type n = C.cols();
   for (auto j : std::views::iota(index_type{0}, n) | std::views::stride(4)) {
     for (auto i : std::views::iota(index_type{0}, m)) {
-      mydot(A.row(i), B.col(j + 0), C(i, j + 0));
-      mydot(A.row(i), B.col(j + 1), C(i, j + 1));
-      mydot(A.row(i), B.col(j + 2), C(i, j + 2));
-      mydot(A.row(i), B.col(j + 3), C(i, j + 3));
+      auto c = C(i, zipper::slice(j, std::integral_constant<index_type, 4>{}));
+      auto b = B(zipper::full_extent_t{},
+                 zipper::slice(j, std::integral_constant<index_type, 4>{}));
+      mydot_1x4(A.row(i), b, c);
     }
   }
 }
