@@ -1,4 +1,5 @@
 #include "definitions.hpp"
+#include <experimental/simd>
 #include <ranges>
 #include <zipper/expression/nullary/Constant.hpp>
 
@@ -6,42 +7,51 @@ namespace {
 auto mymul_4x4(zipper::concepts::Matrix auto const &A,
                zipper::concepts::Matrix auto const &B) {
 
-  // NOTE: by using a matrix here apparently the compiler is auto-vectorizing
-  // better than the original tutorial which used register variables that
-  // couldn't be realized as vectors easily
-  zipper::Matrix<scalar_type, 4, 4, false> C =
-      zipper::expression::nullary::Constant<scalar_type>(0);
-
   // in case we ever experiment, this version is really dependent on colmajor to
   // work right
   static_assert(std::is_same_v<BMat::layout_type, zipper::storage::col_major>);
 
+  // simd_width (definitions.hpp / meson option) = 2 matches the original's SSE.
+  using vec = std::experimental::fixed_size_simd<scalar_type, simd_width>;
+  constexpr index_type W = vec::size();
+  static_assert(W <= 4 && 4 % W == 0);
+  constexpr index_type R = 4 / W;
+  static_assert(std::is_same_v<AMat::layout_type, zipper::storage::col_major>);
   const index_type k = B.rows();
+
+  std::array<std::array<vec, R>, 4> cv{};
+
   for (auto p : std::views::iota(index_type{0}, k)) {
     // we now use a local outer product
-    zipper::Vector a = A.col(p);
-    zipper::Vector b = B.row(p);
+    zipper::VectorBase a = A.col(p);
+    zipper::VectorBase b = B.row(p);
 
-    // NOTE: the matrix use apparently let the compiler reorder so this step
-    // doesn't do anything anymore
-    C(0, 0) += a(0) * b(0);
-    C(1, 0) += a(1) * b(0);
-    C(0, 1) += a(0) * b(1);
-    C(1, 1) += a(1) * b(1);
-    C(0, 2) += a(0) * b(2);
-    C(1, 2) += a(1) * b(2);
-    C(0, 3) += a(0) * b(3);
-    C(1, 3) += a(1) * b(3);
+    std::array<vec, R> av;
+    for (index_type r = 0; r < R; ++r) {
+      av[r].copy_from(&a(r * W), std::experimental::element_aligned);
+    }
 
-    C(2, 0) += a(2) * b(0);
-    C(3, 0) += a(3) * b(0);
-    C(2, 1) += a(2) * b(1);
-    C(3, 1) += a(3) * b(1);
-    C(2, 2) += a(2) * b(2);
-    C(3, 2) += a(3) * b(2);
-    C(2, 3) += a(2) * b(3);
-    C(3, 3) += a(3) * b(3);
+// Unroll explicitly: cv[t][r] must use constant indices to stay in
+// registers, and -O2 (unlike -O3) won't fully unroll this early enough.
+#pragma GCC unroll 4
+    for (index_type t : std::views::iota(0, 4)) {
+      const vec bv = b(t);
+      for (index_type r : std::views::iota(size_t{0}, R)) {
+        cv[t][r] += av[r] * bv;
+      }
+    }
   }
+  // we know this is colmajor so safe to copy W at once
+  zipper::Matrix<scalar_type, 4, 4, false> C;
+// Unroll explicitly: cv[t][r] must use constant indices to stay in
+// registers, and -O2 (unlike -O3) won't fully unroll this early enough.
+#pragma GCC unroll 4
+  for (index_type t : std::views::iota(0, 4)) {
+    for (index_type r : std::views::iota(size_t{0}, R)) {
+      cv[t][r].copy_to(&C(r * W, t), std::experimental::element_aligned);
+    }
+  }
+
   return C;
 }
 
