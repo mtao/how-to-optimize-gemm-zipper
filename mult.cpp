@@ -22,21 +22,24 @@ auto mymul_4x4(zipper::concepts::Matrix auto const &A,
     zipper::Vector a = A.col(p);
     zipper::Vector b = B.row(p);
 
+    // NOTE: the matrix use apparently let the compiler reorder so this step
+    // doesn't do anything anymore
     C(0, 0) += a(0) * b(0);
-    C(0, 1) += a(0) * b(1);
-    C(0, 2) += a(0) * b(2);
-    C(0, 3) += a(0) * b(3);
     C(1, 0) += a(1) * b(0);
+    C(0, 1) += a(0) * b(1);
     C(1, 1) += a(1) * b(1);
+    C(0, 2) += a(0) * b(2);
     C(1, 2) += a(1) * b(2);
+    C(0, 3) += a(0) * b(3);
     C(1, 3) += a(1) * b(3);
+
     C(2, 0) += a(2) * b(0);
-    C(2, 1) += a(2) * b(1);
-    C(2, 2) += a(2) * b(2);
-    C(2, 3) += a(2) * b(3);
     C(3, 0) += a(3) * b(0);
+    C(2, 1) += a(2) * b(1);
     C(3, 1) += a(3) * b(1);
+    C(2, 2) += a(2) * b(2);
     C(3, 2) += a(3) * b(2);
+    C(2, 3) += a(2) * b(3);
     C(3, 3) += a(3) * b(3);
   }
   return C;
