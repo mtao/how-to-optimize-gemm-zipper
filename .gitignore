@@ -67,3 +67,11 @@ vcpkg_installed/
 # test output & cache
 Testing/
 .cache/
+
+# Meson subprojects (downloaded checkouts, cache, promoted redirects)
+subprojects/*/
+subprojects/mdspan.wrap
+
+# Agent / local worktrees
+worktrees/
+subprojects/.wraplock
