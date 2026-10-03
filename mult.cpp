@@ -10,14 +10,8 @@ void mydot_1x4(zipper::concepts::Vector auto const &x,
   const auto indices = std::views::iota(index_type{0}, k);
   for (auto p : indices) {
     c(0) += x(p) * B(p, 0);
-  }
-  for (auto p : indices) {
     c(1) += x(p) * B(p, 1);
-  }
-  for (auto p : indices) {
     c(2) += x(p) * B(p, 2);
-  }
-  for (auto p : indices) {
     c(3) += x(p) * B(p, 3);
   }
 }
