@@ -9,7 +9,9 @@ auto mydot_1x4(zipper::concepts::Vector auto const &x,
   zipper::Vector<scalar_type, 4> r =
       zipper::expression::nullary::Constant<scalar_type>(0);
   const index_type k = x.size();
-  const auto indices = std::views::iota(index_type{0}, k);
+  ZIPPER_ASSERT(k % 4 == 0);
+  const auto indices =
+      std::views::iota(index_type{0}, k) | std::views::stride(4);
 
   // in case we ever experiment, this version is really dependent on colmajor to
   // work right
@@ -21,11 +23,26 @@ auto mydot_1x4(zipper::concepts::Vector auto const &x,
       &B(0, 3),
   }};
   for (auto p : indices) {
-    const scalar_type v = x(p);
-    r(0) += v * *(bptrs[0]++);
-    r(1) += v * *(bptrs[1]++);
-    r(2) += v * *(bptrs[2]++);
-    r(3) += v * *(bptrs[3]++);
+    const scalar_type v0 = x(p);
+    r(0) += v0 * *(bptrs[0]++);
+    r(1) += v0 * *(bptrs[1]++);
+    r(2) += v0 * *(bptrs[2]++);
+    r(3) += v0 * *(bptrs[3]++);
+    const scalar_type v1 = x(p + 1);
+    r(0) += v1 * *(bptrs[0]++);
+    r(1) += v1 * *(bptrs[1]++);
+    r(2) += v1 * *(bptrs[2]++);
+    r(3) += v1 * *(bptrs[3]++);
+    const scalar_type v2 = x(p + 2);
+    r(0) += v2 * *(bptrs[0]++);
+    r(1) += v2 * *(bptrs[1]++);
+    r(2) += v2 * *(bptrs[2]++);
+    r(3) += v2 * *(bptrs[3]++);
+    const scalar_type v3 = x(p + 3);
+    r(0) += v3 * *(bptrs[0]++);
+    r(1) += v3 * *(bptrs[1]++);
+    r(2) += v3 * *(bptrs[2]++);
+    r(3) += v3 * *(bptrs[3]++);
   }
   return r;
 }
