@@ -57,6 +57,7 @@ solutions = [
   '4x4_11',
   '4x4_12',
   '4x4_13',
+  '4x4_14',
 ]
 foreach index : solutions
   mult = 'mmult@0@'.format(index)
