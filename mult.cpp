@@ -9,50 +9,20 @@ void mymul_4x4(zipper::concepts::Matrix auto const &A,
   const index_type k = B.rows();
   for (auto p : std::views::iota(index_type{0}, k)) {
     C(0, 0) += A(0, p) * B(p, 0);
-  }
-  for (auto p : std::views::iota(index_type{0}, k)) {
     C(0, 1) += A(0, p) * B(p, 1);
-  }
-  for (auto p : std::views::iota(index_type{0}, k)) {
     C(0, 2) += A(0, p) * B(p, 2);
-  }
-  for (auto p : std::views::iota(index_type{0}, k)) {
     C(0, 3) += A(0, p) * B(p, 3);
-  }
-  for (auto p : std::views::iota(index_type{0}, k)) {
     C(1, 0) += A(1, p) * B(p, 0);
-  }
-  for (auto p : std::views::iota(index_type{0}, k)) {
     C(1, 1) += A(1, p) * B(p, 1);
-  }
-  for (auto p : std::views::iota(index_type{0}, k)) {
     C(1, 2) += A(1, p) * B(p, 2);
-  }
-  for (auto p : std::views::iota(index_type{0}, k)) {
     C(1, 3) += A(1, p) * B(p, 3);
-  }
-  for (auto p : std::views::iota(index_type{0}, k)) {
     C(2, 0) += A(2, p) * B(p, 0);
-  }
-  for (auto p : std::views::iota(index_type{0}, k)) {
     C(2, 1) += A(2, p) * B(p, 1);
-  }
-  for (auto p : std::views::iota(index_type{0}, k)) {
     C(2, 2) += A(2, p) * B(p, 2);
-  }
-  for (auto p : std::views::iota(index_type{0}, k)) {
     C(2, 3) += A(2, p) * B(p, 3);
-  }
-  for (auto p : std::views::iota(index_type{0}, k)) {
     C(3, 0) += A(3, p) * B(p, 0);
-  }
-  for (auto p : std::views::iota(index_type{0}, k)) {
     C(3, 1) += A(3, p) * B(p, 1);
-  }
-  for (auto p : std::views::iota(index_type{0}, k)) {
     C(3, 2) += A(3, p) * B(p, 2);
-  }
-  for (auto p : std::views::iota(index_type{0}, k)) {
     C(3, 3) += A(3, p) * B(p, 3);
   }
 }
