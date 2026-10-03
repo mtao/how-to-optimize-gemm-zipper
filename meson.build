@@ -32,3 +32,17 @@ executable(
   dependencies: deps,
   cpp_args: ['-DMULT_NAME=mult'],
 )
+
+# Every step as its own executable, for side-by-side comparison.
+solutions = [
+  '_',
+]
+foreach index : solutions
+  mult = 'mmult@0@'.format(index)
+  executable(
+    mult,
+    ['@0@.cpp'.format(mult), 'run.cpp'],
+    dependencies: deps,
+    cpp_args: ['-DMULT_NAME=@0@'.format(mult)],
+  )
+endforeach
