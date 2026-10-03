@@ -69,9 +69,11 @@ void InnerKernel(zipper::concepts::Matrix auto const &A,
           ApackedBuffer(zipper::full_extent_t{}, zipper::slice(i / 4 * k, k));
       auto c = C(zipper::slice(i, std::integral_constant<index_type, 4>{}),
                  zipper::slice(j, std::integral_constant<index_type, 4>{}));
-      panel.noalias() =
-          A(zipper::slice(i, std::integral_constant<index_type, 4>{}),
-            zipper::full_extent_t{});
+      if (j == 0) {
+        panel.noalias() =
+            A(zipper::slice(i, std::integral_constant<index_type, 4>{}),
+              zipper::full_extent_t{});
+      }
       auto b = B(zipper::full_extent_t{},
                  zipper::slice(j, std::integral_constant<index_type, 4>{}));
 
@@ -98,6 +100,8 @@ void MULT_NAME(AMat const &A, BMat const &B, CMat &C) {
            std::views::transform(block);
   };
 
+  // Packing buffers persist across calls (like the original's stack/static
+  // arrays) and are fully overwritten before being read, so skip zero-fill.
   static thread_local zipper::Matrix<scalar_type, 4, zipper::dynamic_extent,
                                      false>
       packedABuffer(zipper::uninitialized, 4, (mc / 4) * kc);
