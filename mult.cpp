@@ -57,18 +57,25 @@ auto mymul_4x4(zipper::concepts::Matrix auto const &A,
 
 void InnerKernel(zipper::concepts::Matrix auto const &A,
                  zipper::concepts::Matrix auto const &B,
-                 zipper::concepts::Matrix auto &C) {
-  const index_type m = C.rows();
+                 zipper::concepts::Matrix auto &C,
+                 zipper::concepts::Matrix auto &ApackedBuffer) {
   const index_type n = C.cols();
+  const index_type m = A.rows();
+  const index_type k = A.cols();
+
   for (auto j : std::views::iota(index_type{0}, n) | std::views::stride(4)) {
     for (auto i : std::views::iota(index_type{0}, m) | std::views::stride(4)) {
+      auto panel =
+          ApackedBuffer(zipper::full_extent_t{}, zipper::slice(i / 4 * k, k));
       auto c = C(zipper::slice(i, std::integral_constant<index_type, 4>{}),
                  zipper::slice(j, std::integral_constant<index_type, 4>{}));
-      auto a = A(zipper::slice(i, std::integral_constant<index_type, 4>{}),
-                 zipper::full_extent_t{});
+      panel.noalias() =
+          A(zipper::slice(i, std::integral_constant<index_type, 4>{}),
+            zipper::full_extent_t{});
       auto b = B(zipper::full_extent_t{},
                  zipper::slice(j, std::integral_constant<index_type, 4>{}));
-      c += mymul_4x4(a, b);
+
+      c += mymul_4x4(panel, b);
     }
   }
 }
@@ -91,6 +98,9 @@ void MULT_NAME(AMat const &A, BMat const &B, CMat &C) {
            std::views::transform(block);
   };
 
+  static thread_local zipper::Matrix<scalar_type, 4, zipper::dynamic_extent,
+                                     false>
+      packedABuffer(zipper::uninitialized, 4, (mc / 4) * kc);
   for (auto [p, pc] : blocks(k, kc)) {
     for (auto [i, ic] : blocks(m, mc)) {
 
@@ -100,7 +110,7 @@ void MULT_NAME(AMat const &A, BMat const &B, CMat &C) {
       auto a = A(islice, kslice);
       auto b = B(kslice, zipper::full_extent_t{});
       auto c = C(islice, zipper::full_extent_t{});
-      InnerKernel(a, b, c);
+      InnerKernel(a, b, c, packedABuffer);
     }
   }
 }
