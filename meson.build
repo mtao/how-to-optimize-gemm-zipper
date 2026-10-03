@@ -36,6 +36,7 @@ executable(
 # Every step as its own executable, for side-by-side comparison.
 solutions = [
   '_',
+  '0',
 ]
 foreach index : solutions
   mult = 'mmult@0@'.format(index)
