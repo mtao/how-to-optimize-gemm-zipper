@@ -7,10 +7,6 @@ namespace {
 auto mymul_4x4(zipper::concepts::Matrix auto const &A,
                zipper::concepts::Matrix auto const &B) {
 
-  // in case we ever experiment, this version is really dependent on colmajor to
-  // work right
-  static_assert(std::is_same_v<BMat::layout_type, zipper::storage::col_major>);
-
   // simd_width (definitions.hpp / meson option) = 2 matches the original's SSE.
   using vec = std::experimental::fixed_size_simd<scalar_type, simd_width>;
   constexpr index_type W = vec::size();
@@ -58,26 +54,30 @@ auto mymul_4x4(zipper::concepts::Matrix auto const &A,
 void InnerKernel(zipper::concepts::Matrix auto const &A,
                  zipper::concepts::Matrix auto const &B,
                  zipper::concepts::Matrix auto &C,
-                 zipper::concepts::Matrix auto &ApackedBuffer) {
+                 zipper::concepts::Matrix auto &ApackedBuffer,
+                 zipper::concepts::Matrix auto &BpackedBuffer) {
   const index_type n = C.cols();
   const index_type m = A.rows();
   const index_type k = A.cols();
 
   for (auto j : std::views::iota(index_type{0}, n) | std::views::stride(4)) {
+    auto Bpanel =
+        BpackedBuffer(zipper::slice(j / 4 * k, k), zipper::full_extent_t{});
+    Bpanel.noalias() =
+        B(zipper::full_extent_t{},
+          zipper::slice(j, std::integral_constant<index_type, 4>{}));
     for (auto i : std::views::iota(index_type{0}, m) | std::views::stride(4)) {
-      auto panel =
+      auto Apanel =
           ApackedBuffer(zipper::full_extent_t{}, zipper::slice(i / 4 * k, k));
       auto c = C(zipper::slice(i, std::integral_constant<index_type, 4>{}),
                  zipper::slice(j, std::integral_constant<index_type, 4>{}));
       if (j == 0) {
-        panel.noalias() =
+        Apanel.noalias() =
             A(zipper::slice(i, std::integral_constant<index_type, 4>{}),
               zipper::full_extent_t{});
       }
-      auto b = B(zipper::full_extent_t{},
-                 zipper::slice(j, std::integral_constant<index_type, 4>{}));
 
-      c += mymul_4x4(panel, b);
+      c += mymul_4x4(Apanel, Bpanel);
     }
   }
 }
@@ -89,6 +89,7 @@ void MULT_NAME(AMat const &A, BMat const &B, CMat &C) {
   constexpr static index_type kc = 128;
 
   const index_type m = C.rows();
+  const index_type n = C.cols();
   const index_type k = A.cols();
 
   constexpr auto blocks = [](index_type n, index_type b) {
@@ -105,6 +106,12 @@ void MULT_NAME(AMat const &A, BMat const &B, CMat &C) {
   static thread_local zipper::Matrix<scalar_type, 4, zipper::dynamic_extent,
                                      false>
       packedABuffer(zipper::uninitialized, 4, (mc / 4) * kc);
+  static thread_local zipper::Matrix<scalar_type, zipper::dynamic_extent, 4,
+                                     true>
+      packedBBuffer(zipper::uninitialized, 0, 4);
+  if (packedBBuffer.rows() < (n / 4) * kc) {
+    packedBBuffer.resize(zipper::uninitialized, (n / 4) * kc, 4);
+  }
   for (auto [p, pc] : blocks(k, kc)) {
     for (auto [i, ic] : blocks(m, mc)) {
 
@@ -114,7 +121,7 @@ void MULT_NAME(AMat const &A, BMat const &B, CMat &C) {
       auto a = A(islice, kslice);
       auto b = B(kslice, zipper::full_extent_t{});
       auto c = C(islice, zipper::full_extent_t{});
-      InnerKernel(a, b, c, packedABuffer);
+      InnerKernel(a, b, c, packedABuffer, packedBBuffer);
     }
   }
 }
